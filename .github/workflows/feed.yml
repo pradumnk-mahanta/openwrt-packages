@@ -1,0 +1,50 @@
+name: Publish OpenWrt APK Feed
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: openwrt-feed
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install standalone APK tools
+        run: |
+          mkdir -p "$RUNNER_TEMP/sbin"
+          docker run --rm --mount "type=bind,source=$RUNNER_TEMP/sbin,target=/out" \
+            alpine:3.23 sh -ec 'apk add --no-cache apk-tools-static && cp /sbin/apk.static /out/'
+      - name: Download and verify upstream release APKs
+        run: python3 scripts/sync-releases.py feed.json "$RUNNER_TEMP/sbin/apk.static" "$RUNNER_TEMP/site"
+      - name: Create and verify signed APK indexes
+        env:
+          APK_SIGNING_KEY: ${{ secrets.APK_SIGNING_KEY }}
+        run: bash scripts/sign-feed.sh feed.json "$RUNNER_TEMP/sbin/apk.static" "$RUNNER_TEMP/site"
+      - name: Publish signed feed to main
+        run: |
+          git fetch origin main
+          if [[ $(git rev-parse HEAD) != "$(git rev-parse FETCH_HEAD)" ]]; then
+            echo "Skipping publish because main has advanced."
+            exit 0
+          fi
+
+          mkdir -p feed
+          # Cached indexes can still refer to older APKs.
+          cp -a "$RUNNER_TEMP/site/." feed/
+          git add -- feed/
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Publish OpenWrt APK feed'
+          git push origin HEAD:main
