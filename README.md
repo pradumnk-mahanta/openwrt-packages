@@ -24,8 +24,10 @@ APK expands `${APK_ARCH}` in the repository file to select the matching index.
         'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/keys/openwrt-packages-pm.pem'
 
     # 2. Add the feed
-    printf '%s\n' 'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/${APK_ARCH}/packages.adb' \
-        > /etc/apk/repositories.d/openwrt-packages-pm.list
+    printf '%s\n' 'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/${APK_ARCH}/packages.adb' > /etc/apk/repositories.d/openwrt-packages-pm.list
+
+    # e.g.
+    printf '%s\n' 'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/aarch64_cortex-a53/packages.adb' > /etc/apk/repositories.d/openwrt-packages-pm.list
 
     # 3. Refresh and install the bundle
     apk update
