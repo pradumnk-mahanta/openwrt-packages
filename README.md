@@ -53,14 +53,12 @@ Install the packages you want individually. For example,
 
 ## Move a Newt site to Pangolin CLI
 
-With the feed configured, install the APK and create the site environment file
-with root-only permissions.
+With the feed configured, install the APK. It creates `/etc/pangolin` and
+`pangolin-site.env` with root-only permissions when they are missing.
+Existing files and permissions are preserved.
 
 ```sh
 apk -U add pangolin-cli
-mkdir -p /etc/pangolin
-(umask 077; touch /etc/pangolin/pangolin-site.env)
-chmod 600 /etc/pangolin/pangolin-site.env
 vi /etc/pangolin/pangolin-site.env
 ```
 
@@ -84,6 +82,7 @@ logread -e pangolin
 ```
 
 Run `/etc/init.d/pangolin restart` after editing the environment file.
+Pangolin writes its generated config to `/etc/pangolin/site.json` by default.
 
 ### Firmware upgrades
 

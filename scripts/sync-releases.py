@@ -33,17 +33,23 @@ def build_binary_package(apk, package, arch, binary):
     name = package["name"]
     version = f'{package["version"]}-r{spec["revision"]}'
     root = binary.parent / "root"
-    shutil.copytree(Path(__file__).resolve().parent.parent / "packages" / name, root)
+    packages = Path(__file__).resolve().parent.parent / "packages"
+    shutil.copytree(packages / name, root)
     executable = root / spec["path"]
     executable.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(binary, executable)
     executable.chmod(0o755)
-    for init_script in (root / "etc/init.d").iterdir():
-        init_script.chmod(0o755)
+    for pattern in ("etc/init.d/*", "usr/libexec/*"):
+        for script in root.glob(pattern):
+            script.chmod(0o755)
 
     archive = binary.parent / f"{name}-{version}.apk"
+    script_options = []
+    setup = packages / f"{name}.post-install"
+    if setup.is_file():
+        script_options = ["--script", f"post-install:{setup}", "--script", f"post-upgrade:{setup}"]
     subprocess.run(
-        [apk, "mkpkg", "--files", str(root), "--output", str(archive),
+        [apk, "mkpkg", "--files", str(root), "--output", str(archive), *script_options,
          "--info", f"name:{name}", "--info", f"version:{version}",
          "--info", f"arch:{arch}", "--info", f"url:{package['repo']}",
          "--info", f"description:{spec['description']}",

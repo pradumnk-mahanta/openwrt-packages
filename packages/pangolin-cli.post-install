@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -euC
+umask 077
+config_dir=/etc/pangolin
+env_file="$config_dir/pangolin-site.env"
+
+if [ ! -e "$config_dir" ] && [ ! -L "$config_dir" ]; then
+	mkdir -p "$config_dir"
+fi
+[ -d "$config_dir" ] || exit 0
+
+if [ ! -e "$env_file" ] && [ ! -L "$env_file" ]; then
+	: > "$env_file"
+fi

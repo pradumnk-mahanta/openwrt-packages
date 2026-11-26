@@ -13,15 +13,7 @@ start_service() {
 	}
 
 	procd_open_instance
-	procd_set_param command /bin/sh -ec '
-		umask 077
-		set -a
-		. "$1"
-		: "${SITE_ID:?Set SITE_ID}" "${SITE_SECRET:?Set SITE_SECRET}" "${PANGOLIN_ENDPOINT:?Set PANGOLIN_ENDPOINT}"
-		# Use the upstream managed-container setting to disable binary self-updates.
-		export NEWT_SYSTEM_SUBSTRATE=CONTAINER
-		exec /usr/bin/pangolin up site
-	' pangolin "$env_file"
+	procd_set_param command /usr/libexec/pangolin-site "$env_file"
 	procd_set_param file "$env_file"
 	procd_set_param respawn 3600 5 5
 	procd_set_param stdout 1
