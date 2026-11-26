@@ -11,6 +11,13 @@ The initial feed targets OpenWrt **25.12.6**.
 | `x86/64` | `x86_64` | [packages.adb](https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/x86_64/packages.adb) |
 | `mediatek/filogic` | `aarch64_cortex-a53` | [packages.adb](https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/aarch64_cortex-a53/packages.adb) |
 
+## Update package versions
+
+In GitHub Actions, run **Check for OpenWrt Package Updates** on `main`. It
+checks each upstream project's latest stable release. A newer release needs
+one matching asset with a SHA-256 digest for each architecture listed for the
+package. The workflow verifies the updated feed, commits `feed.json`, and
+starts **Publish OpenWrt APK Feed**. If no pins change, the run ends after the check.
 
 ## Install on a router
 

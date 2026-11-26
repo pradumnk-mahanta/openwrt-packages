@@ -1,0 +1,48 @@
+name: Check for OpenWrt Package Updates
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: openwrt-package-updates
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Check upstream releases
+        id: releases
+        run: |
+          python3 scripts/update-releases.py feed.json
+          if ! git diff --quiet -- feed.json; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify updated feed pins
+        if: steps.releases.outputs.changed == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/sbin"
+          docker run --rm --mount "type=bind,source=$RUNNER_TEMP/sbin,target=/out" \
+            alpine:3.23 sh -ec 'apk add --no-cache apk-tools-static && cp /sbin/apk.static /out/'
+          python3 scripts/sync-releases.py feed.json "$RUNNER_TEMP/sbin/apk.static" "$RUNNER_TEMP/site"
+      - name: Commit and push updated pins
+        if: steps.releases.outputs.changed == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- feed.json
+          git commit -m 'Update OpenWrt package release pins'
+          git push origin HEAD:main
+      - name: Run Publish OpenWrt APK Feed
+        if: steps.releases.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run feed.yml --ref main

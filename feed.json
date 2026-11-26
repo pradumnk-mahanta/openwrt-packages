@@ -9,10 +9,12 @@
       "assets": {
         "x86_64": {
           "file": "mwan3-3.6.12-1_openwrt-25.12_x86_64.apk",
+          "match": "mwan3-[0-9.]+(?:-[0-9]+)?_openwrt-{openwrt_series}_x86_64[.]apk",
           "sha256": "f919b3650794500ddd1cc96cb54ae0a240062eadd23af6708de1c9e6bd764699"
         },
         "aarch64_cortex-a53": {
           "file": "mwan3-3.6.12-1_openwrt-25.12_aarch64_cortex-a53.apk",
+          "match": "mwan3-[0-9.]+(?:-[0-9]+)?_openwrt-{openwrt_series}_aarch64_cortex-a53[.]apk",
           "sha256": "7123dc1c306241e40870c0402ba503396b45f84625731dbf0c8979053e3959a4"
         }
       }
@@ -24,6 +26,7 @@
       "assets": {
         "noarch": {
           "file": "luci-app-mwan3_26.999.3.6.12.apk",
+          "match": "luci-app-mwan3_[0-9.]+(?:-r[0-9]+)?[.]apk",
           "sha256": "b16e608aff6fc25aa6b9afdd96a0dcc664ae0873b59b6a68b4dfee60f5d26d8d"
         }
       }
@@ -35,6 +38,7 @@
       "assets": {
         "noarch": {
           "file": "luci-theme-fluent-1.0.9-r1.apk",
+          "match": "luci-theme-fluent-[0-9.]+-r[0-9]+[.]apk",
           "sha256": "f4621d41c2ef5522276cf1d112eb476644be348c2aaae9dda69e96fa403a6953"
         }
       }
