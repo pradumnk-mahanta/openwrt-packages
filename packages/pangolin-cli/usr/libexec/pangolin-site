@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -ea
+umask 077
+. "$1"
+: "${SITE_ID:?Set SITE_ID}" "${SITE_SECRET:?Set SITE_SECRET}" "${PANGOLIN_ENDPOINT:?Set PANGOLIN_ENDPOINT}"
+export CONFIG_FILE="${CONFIG_FILE:-/etc/pangolin/site.json}"
+# Use the upstream managed-container setting to disable binary self-updates.
+export NEWT_SYSTEM_SUBSTRATE=CONTAINER
+exec /usr/bin/pangolin up site

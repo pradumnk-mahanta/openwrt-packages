@@ -49,7 +49,7 @@
       "version": "0.23.0",
       "binary": {
         "path": "usr/bin/pangolin",
-        "revision": 1,
+        "revision": 4,
         "description": "Pangolin CLI and site connector",
         "depends": "ca-bundle"
       },
