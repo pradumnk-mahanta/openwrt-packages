@@ -1,6 +1,6 @@
 # OpenWrt APK feed
 
-GitHub Actions mirrors the upstream GitHub release APKs pinned in
+GitHub Actions prepares APKs from the upstream GitHub release assets pinned in
 [feed.json](feed.json) and commits the signed feed under `feed/` on `main`
 after each push, including merges. Routers download it from GitHub's raw URLs.
 
@@ -26,30 +26,72 @@ APK expands `${APK_ARCH}` in the repository file to select the matching index.
     # 2. Add the feed
     printf '%s\n' 'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/${APK_ARCH}/packages.adb' > /etc/apk/repositories.d/openwrt-packages-pm.list
 
-    # e.g.
-    printf '%s\n' 'https://raw.githubusercontent.com/pradumnk-mahanta/openwrt-packages/main/feed/25.12.6/aarch64_cortex-a53/packages.adb' > /etc/apk/repositories.d/openwrt-packages-pm.list
+    # To pin the feed to Filogic, replace ${APK_ARCH} above with aarch64_cortex-a53.
 
-    # 3. Refresh and install the bundle
+    # 3. Refresh the package index
     apk update
-    apk add openwrt-packages-pm
 )
 ```
 
-`openwrt-packages-pm` installs MWAN3, its LuCI app, and the Fluent, Material 3,
-Argon and Glass themes. Use `apk del openwrt-packages-pm` to remove the bundle.
-APK keeps any packages you installed explicitly or that other packages require.
-
-You can also install individual packages, for example
-`apk add luci-app-mwan3 luci-theme-fluent`. The LuCI app pulls in `mwan3`.
+Install the packages you want individually. For example,
+`apk add luci-theme-fluent` installs the Fluent theme, and
+`apk add luci-app-mwan3` installs the LuCI app and its `mwan3` dependency.
 
 ### Available packages
 
 - `mwan3` — MWAN3 multi-WAN service
 - `luci-app-mwan3` — LuCI interface for MWAN3
 - `luci-theme-fluent` — Fluent theme
-- `luci-theme-material3` — Material 3 theme
-- `luci-theme-argon` — Argon theme
-- `luci-theme-glass` — Glass theme
+- `pangolin-cli` — Pangolin CLI and site connector
+
+## Move a Newt site to Pangolin CLI
+
+With the feed configured, install the APK and create the site environment file
+with root-only permissions.
+
+```sh
+apk -U add pangolin-cli
+mkdir -p /etc/pangolin
+(umask 077; touch /etc/pangolin/pangolin-site.env)
+chmod 600 /etc/pangolin/pangolin-site.env
+vi /etc/pangolin/pangolin-site.env
+```
+
+Add these shell assignments using your existing Newt site ID and secret.
+
+```sh
+SITE_ID='replace-with-site-id'
+SITE_SECRET='replace-with-site-secret'
+PANGOLIN_ENDPOINT='https://pangolin.itryto.win'
+```
+
+If Newt is installed, stop and disable it before starting Pangolin with the
+same credentials.
+
+```sh
+/etc/init.d/newt stop
+/etc/init.d/newt disable
+/etc/init.d/pangolin enable
+/etc/init.d/pangolin start
+logread -e pangolin
+```
+
+Run `/etc/init.d/pangolin restart` after editing the environment file.
+
+### Firmware upgrades
+
+The APK adds the site environment file, feed repository entry, and feed signing
+key to the sysupgrade backup list. Before upgrading with **Keep settings**
+enabled, verify the files are listed.
+
+```sh
+sysupgrade -l | grep -E 'pangolin-site\.env|openwrt-packages-pm\.'
+```
+
+After flashing stock firmware, reinstall `pangolin-cli` from a feed matching
+the new OpenWrt release, then enable and start the service again. An image
+built with this APK can carry the service through the upgrade. The sysupgrade
+backup contains the site secret.
 
 ## Upstream projects
 
@@ -59,11 +101,7 @@ You can also install individual packages, for example
   [Upstream repository](https://github.com/dl12345/luci-app-mwan3)
 - **luci-theme-fluent** is the Fluent 2-inspired LuCI theme by LazuliKao.
   [Upstream repository](https://github.com/LazuliKao/luci-theme-fluent)
-- **luci-theme-material3** is the Material 3 LuCI theme by michioxd.
-  [Upstream repository](https://github.com/michioxd/luci-theme-material3)
-- **luci-theme-argon** is the Argon LuCI theme by jerrykuku and contributors.
-  [Upstream repository](https://github.com/jerrykuku/luci-theme-argon)
-- **luci-theme-glass** is the Glass LuCI theme by rchen14b.
-  [Upstream repository](https://github.com/rchen14b/luci-theme-glass)
+- **pangolin-cli** repackages the upstream Linux binaries.
+  [Release and source](https://github.com/fosrl/cli/releases/tag/0.23.0)
 
-The three-step setup and bundle were inspired by [UnTangled](https://github.com/bidhata/untangled#readme).
+The feed setup was inspired by [UnTangled](https://github.com/bidhata/untangled#readme).

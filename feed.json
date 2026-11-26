@@ -1,9 +1,5 @@
 {
   "openwrt": "25.12.6",
-  "bundle": {
-    "name": "openwrt-packages-pm",
-    "version": "1.0-r1"
-  },
   "architectures": ["x86_64", "aarch64_cortex-a53"],
   "packages": [
     {
@@ -44,35 +40,23 @@
       }
     },
     {
-      "name": "luci-theme-material3",
-      "repo": "https://github.com/michioxd/luci-theme-material3",
-      "version": "0.1",
+      "name": "pangolin-cli",
+      "repo": "https://github.com/fosrl/cli",
+      "version": "0.23.0",
+      "binary": {
+        "path": "usr/bin/pangolin",
+        "revision": 1,
+        "description": "Pangolin CLI and site connector",
+        "depends": "ca-bundle"
+      },
       "assets": {
-        "noarch": {
-          "file": "luci-theme-material3-0.1-r20260703.apk",
-          "sha256": "364a86701a59cef85c363c82b3feed81c205aed0b47426b4e980c98cd6918b8f"
-        }
-      }
-    },
-    {
-      "name": "luci-theme-argon",
-      "repo": "https://github.com/jerrykuku/luci-theme-argon",
-      "version": "v3.2.0",
-      "assets": {
-        "noarch": {
-          "file": "luci-theme-argon-3.2.0-r1.apk",
-          "sha256": "1cb04a7f3a6dcf292fe76d3771c911d01013fa4da23ddb550314feb927a86c2e"
-        }
-      }
-    },
-    {
-      "name": "luci-theme-glass",
-      "repo": "https://github.com/rchen14b/luci-theme-glass",
-      "version": "v1.1.6",
-      "assets": {
-        "noarch": {
-          "file": "luci-theme-glass-1.1.6-r1.apk",
-          "sha256": "631b46cd30fae6b5361fb57e1abd8ba2541a522682067557e6c933535d16a072"
+        "x86_64": {
+          "file": "pangolin-cli_linux_amd64",
+          "sha256": "f947176b6c8721928a45ccfb0152bacd3b4b75c6f212da0292efb7799947d87c"
+        },
+        "aarch64_cortex-a53": {
+          "file": "pangolin-cli_linux_arm64",
+          "sha256": "bb5930cad86bd840bec67597194b83c717c7e9c11dfe851ab16ab65adde64711"
         }
       }
     }
