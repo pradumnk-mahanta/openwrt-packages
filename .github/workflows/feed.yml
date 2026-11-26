@@ -23,7 +23,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/sbin"
           docker run --rm --mount "type=bind,source=$RUNNER_TEMP/sbin,target=/out" \
             alpine:3.23 sh -ec 'apk add --no-cache apk-tools-static && cp /sbin/apk.static /out/'
-      - name: Download and verify upstream release APKs
+      - name: Verify release assets and prepare APKs
         run: python3 scripts/sync-releases.py feed.json "$RUNNER_TEMP/sbin/apk.static" "$RUNNER_TEMP/site"
       - name: Create and verify signed APK indexes
         env:
@@ -38,8 +38,10 @@ jobs:
           fi
 
           mkdir -p feed
-          # Cached indexes can still refer to older APKs.
+          # Keep older versions of active packages for cached indexes.
           cp -a "$RUNNER_TEMP/site/." feed/
+          release=$(jq -er '.openwrt' feed.json)
+          rm -f -- "feed/$release/"*/{openwrt-packages-pm,luci-theme-glass,luci-theme-argon,luci-theme-material3}-[0-9]*.apk
           git add -- feed/
           if git diff --cached --quiet; then
             exit 0

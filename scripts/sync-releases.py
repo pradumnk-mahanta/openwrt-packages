@@ -9,7 +9,7 @@ import tempfile
 from urllib.parse import quote
 
 
-def download_package(apk, package, arch, path):
+def download_asset(package, arch, path):
     asset = package["assets"][arch]
     name = package["name"]
     tag = quote(package["version"], safe="")
@@ -25,6 +25,35 @@ def download_package(apk, package, arch, path):
     with path.open("rb") as archive:
         if hashlib.file_digest(archive, "sha256").hexdigest() != asset["sha256"]:
             raise ValueError(f"SHA-256 mismatch for {url}")
+    return url
+
+
+def build_binary_package(apk, package, arch, binary):
+    spec = package["binary"]
+    name = package["name"]
+    version = f'{package["version"]}-r{spec["revision"]}'
+    root = binary.parent / "root"
+    shutil.copytree(Path(__file__).resolve().parent.parent / "packages" / name, root)
+    executable = root / spec["path"]
+    executable.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(binary, executable)
+    executable.chmod(0o755)
+    for init_script in (root / "etc/init.d").iterdir():
+        init_script.chmod(0o755)
+
+    archive = binary.parent / f"{name}-{version}.apk"
+    subprocess.run(
+        [apk, "mkpkg", "--files", str(root), "--output", str(archive),
+         "--info", f"name:{name}", "--info", f"version:{version}",
+         "--info", f"arch:{arch}", "--info", f"url:{package['repo']}",
+         "--info", f"description:{spec['description']}",
+         "--info", f"depends:{spec['depends']}"],
+        check=True,
+    )
+    return archive
+
+
+def package_filename(apk, name, arch, path, url):
 
     metadata = subprocess.check_output(
         [apk, "adbdump", "--format", "json", "--allow-untrusted", str(path)],
@@ -51,17 +80,22 @@ def sync(config, apk, output):
             destination = output / config["openwrt"] / target_arch
             destinations.setdefault(arch, []).append(destination)
 
-        with tempfile.TemporaryDirectory() as work:
-            source = Path(work) / "release.apk"
-            for arch, directories in destinations.items():
-                filename = download_package(apk, package, arch, source)
+        for arch, directories in destinations.items():
+            with tempfile.TemporaryDirectory() as work:
+                source = Path(work) / "release"
+                url = download_asset(package, arch, source)
+                if "binary" in package:
+                    source = build_binary_package(apk, package, arch, source)
+                    filename = source.name
+                else:
+                    filename = package_filename(apk, package["name"], arch, source, url)
                 for directory in directories:
                     directory.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(source, directory / filename)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Mirror pinned OpenWrt APK release assets")
+    parser = argparse.ArgumentParser(description="Prepare APKs from pinned release assets")
     parser.add_argument("config", type=Path)
     parser.add_argument("apk", type=Path)
     parser.add_argument("output", type=Path)
